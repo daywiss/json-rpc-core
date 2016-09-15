@@ -1,43 +1,97 @@
 # json-rpc-core
 Transport agnostic JSON RPC message handling API meant for streams.  This library uses highland to wrap callbacks and promises into stream.
 
-Example using the rpc-core with redis pub/sub, found in examples folder:
+Example using the json-rpc-core with an event emitter, found in examples folder:
 
 ```js
-var _ = require('highland')
-var Promise = require('bluebird')
-var RPC = require('../')
+const _ = require('highland')
+const RPC = require('../')
+const assert = require('assert')
 
-function Stream(id,pub,sub,methods,server){
-
-  var rpc = RPC(methods || {})
-  
-  var sendChannel = [id,'request'].join(':')
-  var receiveChannel = [id,'response'].join(':')
-
-  //this is a server
-  if(server){
-    sendChannel = [id,'response'].join(':')
-    receiveChannel = [id,'request'].join(':')
-  }
-
-  _('message',sub,['channel','data'])
-  .filter(function(data){
-    return data.channel == receiveChannel
-  }).map(function(data){
-    return data.data
-  }).pipe(rpc).pipe(_()).each(function(data){
-    pub.publish(sendChannel,data)
-  })
-
-  sub.setMaxListeners(0)
-
-  return Promise.fromCallback(function(cb){
-    return sub.subscribe(receiveChannel,cb)
-  }).then(function(){
-    return rpc
-  })
+//create an rpc "client" with methods the server can call
+module.exports.client = function(id,emitter,methods){
+  assert(id)
+  assert(emitter)
+  var client = id + ' client'
+  var server = id + ' server'
+  return Emitter(client,server,emitter,methods)
 }
 
-module.exports = Stream
+//create the rpc "server" with methods client can call
+module.exports.server = function(id, emitter,methods){
+  assert(id)
+  assert(emitter)
+  var client = id + ' client'
+  var server = id + ' server'
+  return Emitter(server,client,emitter,methods)
+}
+
+function Emitter(localid,remoteid,emitter,methods){
+  var rpc = RPC(methods || {})
+
+  //create a stream from events with the localid
+  _(localid,emitter)
+    //send to json-rpc-core
+    .pipe(rpc)
+    //handle results and emit them to remote id
+    .on('data',function(message){
+      emitter.emit(remoteid,message)
+    })
+
+    //return rpc object which has call and notify functions
+    return rpc
+}
+
 ```
+
+#Usage
+```
+  var EmitterRPC = require('../examples/emitter-rpc')
+  var Emitter = require('events')
+  var Promise = require('bluebird')
+
+  //example of methods available through RPC on a server
+  var methods = {
+    echo:function(msg){
+      return msg
+    },
+    error:function(msg){
+      throw new Error(msg)
+    },
+    promiseError:function(msg){
+      return Promise.reject(msg)
+    },
+    promise:function(msg){
+      return Promise.resolve(msg)
+    }
+  }
+
+  //note normally you would just have methods on server, but server can call client as well
+  var client = EmitterRPC.client('test',emitter,methods)
+  var server = EmitterRPC.server('test',emitter,methods)
+
+  //rpc calls client to server, but server to client work as well
+  client.call('echo','echo').then(function(result){
+    //result == 'echo'
+  })
+
+  client.call('promise','echo').then(function(result){
+    //result == 'echo'
+  })
+
+  client.call('error','echo').catch(function(err){
+    //err == 'echo'
+  })
+
+  client.call('promiseError','echo').catch(function(err){
+    //err == 'echo'
+  })
+
+  //client and server also can notify each other
+  client.on('test',function(result){
+    //result == 'test'
+  })
+  server.notify('test','test')
+
+```
+

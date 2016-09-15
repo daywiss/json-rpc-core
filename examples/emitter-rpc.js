@@ -2,6 +2,7 @@ const _ = require('highland')
 const RPC = require('../')
 const assert = require('assert')
 
+//create an rpc "client" with methods the server can call
 module.exports.client = function(id,emitter,methods){
   assert(id)
   assert(emitter)
@@ -10,6 +11,7 @@ module.exports.client = function(id,emitter,methods){
   return Emitter(client,server,emitter,methods)
 }
 
+//create the rpc "server" with methods client can call
 module.exports.server = function(id, emitter,methods){
   assert(id)
   assert(emitter)
@@ -21,12 +23,16 @@ module.exports.server = function(id, emitter,methods){
 function Emitter(localid,remoteid,emitter,methods){
   var rpc = RPC(methods || {})
 
+  //create a stream from events with the localid
   _(localid,emitter)
+    //send to json-rpc-core
     .pipe(rpc)
+    //handle results and emit them to remote id
     .on('data',function(message){
       emitter.emit(remoteid,message)
     })
 
+    //return rpc object which has call and notify functions
     return rpc
 }
 
