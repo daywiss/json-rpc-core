@@ -69,7 +69,8 @@ function Emitter(localid,remoteid,emitter,methods){
       return Promise.resolve(msg)
     }
   }
-
+  //this emitter will act as our psuedo IPC transport layer 
+  var emitter = new Emitter()
   //note normally you would just have methods on server, but server can call client as well
   var client = EmitterRPC.client('test',emitter,methods)
   var server = EmitterRPC.server('test',emitter,methods)
