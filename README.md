@@ -45,7 +45,7 @@ function Emitter(localid,remoteid,emitter,methods){
 ```
 
 #Usage
-```
+```js
   var EmitterRPC = require('../examples/emitter-rpc')
   var Emitter = require('events')
   var Promise = require('bluebird')
