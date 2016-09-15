@@ -1,6 +1,10 @@
 # json-rpc-core
 Transport agnostic JSON RPC message handling API meant for streams.  This library uses highland to wrap callbacks and promises into stream.
 
+#Install
+``` npm install --save json-rpc-core```   
+
+#Adding Transport Layer
 Example using the json-rpc-core with an event emitter, found in examples folder:
 
 ```js
