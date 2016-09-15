@@ -2,6 +2,7 @@ var _ = require('highland')
 var Promise = require('bluebird')
 var jrs = require('jsonrpc-serializer')
 var shortid = require('shortid')
+var lodash = require('lodash')
 
 
 function RPC(methods){
@@ -25,24 +26,42 @@ function RPC(methods){
           return _(Promise.resolve(false))
       }
     }).errors(function(err,next){
-      console.log(err)
-      next()
+      console.log('JSON-RPC-CORE', err.toString())
+      next(err)
     }).compact().pipe(outstream)
   })
 
+  //on the server end, handle a method call from client
   function handleRequest(message){
     var method = message.method
     var id = message.id
     var params = message.params
 
+    //method does not exist on server
     if(methods[method] == null){
       var err = new jrs.err.MethodNotFoundError()
       return Promise.resolve(jrs.error(id,err))
     }
-    return Promise.resolve(methods[method](params)).then(function(result){
+
+    var result = null
+    //in case the function throws an error
+    try{
+      result = methods[method].apply(methods,params)
+    }catch(err){
+      err = new jrs.err.JsonRpcError(err.message) 
+      return Promise.resolve(jrs.error(id,err))
+    }
+
+    //wrap result in promise
+    return Promise.resolve(result).then(function(result){
       return jrs.success(id,result)
     }).catch(function(err){
-      err = new jrs.err.JsonRpcError(err)
+      //check if actual error object or just a string
+      if(lodash.isError(err)){
+        err = new jrs.err.JsonRpcError(err.message) 
+      }else{
+        err = new jrs.err.JsonRpcError(err)
+      }
       return jrs.error(id,err)
     })
   }
@@ -77,9 +96,10 @@ function RPC(methods){
     delete requests[id]
   }
 
-  function call(method,params){
+  function call(method){
     var id = shortid.generate()
-    message = jrs.request(id,method,params)
+    var argumentList = Array.prototype.slice.call(arguments,1)
+    message = jrs.request(id,method,argumentList)
     var promise = new Promise(function(resolve,reject){
        requests[id] = {
          resolve:resolve,

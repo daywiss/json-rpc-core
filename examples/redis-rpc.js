@@ -2,7 +2,7 @@ var _ = require('highland')
 var Promise = require('bluebird')
 var RPC = require('../')
 
-function Stream(id,pub,sub,methods,server){
+function Redis(id,pub,sub,methods,server){
 
   var rpc = RPC(methods || {})
   
@@ -33,4 +33,11 @@ function Stream(id,pub,sub,methods,server){
   })
 }
 
-module.exports = Stream
+module.exports.client = function(id,pub,sub){
+  return Redis(id,pub,sub)
+}
+
+module.exports.server = function(id,pub,sub,methods){
+  return Redis(id,pub,sub,methods,true)
+}
+
