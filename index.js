@@ -54,7 +54,7 @@ function RPC(methods){
 
     //wrap result in promise
     return Promise.resolve(result).then(function(result){
-      return jrs.success(id,result)
+      return jrs.success(id,result || '')
     }).catch(function(err){
       //check if actual error object or just a string
       if(lodash.isError(err)){

@@ -6,6 +6,11 @@ var methods = {
   echo:function(msg){
     return msg
   },
+  nothing:function(){
+  },
+  nothingPromise:function(){
+    return Promise.resolve()
+  },
   error:function(msg){
     throw new Error(msg)
   },
@@ -110,6 +115,24 @@ module.exports = function(test){
         })
         server.call('promiseError',str).catch(function(err){
           t.equal(str,err)
+        })
+    })
+    t.test('nothing',function(t){
+        t.plan(2)
+        client.call('nothing').then(function(result){
+          t.notOk(result)
+        })
+        server.call('nothing').then(function(result){
+          t.notOk(result)
+        })
+    })
+    t.test('nothing promise',function(t){
+        t.plan(2)
+        client.call('nothingPromise').then(function(result){
+          t.notOk(result)
+        })
+        server.call('nothingPromise').then(function(result){
+          t.notOk(result)
         })
     })
   })
