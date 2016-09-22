@@ -1,6 +1,10 @@
 # json-rpc-core
 Transport agnostic JSON RPC message handling API meant for streams.  This library uses highland to wrap callbacks and promises into stream.
 
+#Install
+``` npm install --save json-rpc-core```   
+
+#Adding Transport Layer
 Example using the json-rpc-core with an event emitter, found in examples folder:
 
 ```js
@@ -45,7 +49,7 @@ function Emitter(localid,remoteid,emitter,methods){
 ```
 
 #Usage
-```
+```js
   var EmitterRPC = require('../examples/emitter-rpc')
   var Emitter = require('events')
   var Promise = require('bluebird')
@@ -65,7 +69,8 @@ function Emitter(localid,remoteid,emitter,methods){
       return Promise.resolve(msg)
     }
   }
-
+  //this emitter will act as our psuedo IPC transport layer 
+  var emitter = new Emitter()
   //note normally you would just have methods on server, but server can call client as well
   var client = EmitterRPC.client('test',emitter,methods)
   var server = EmitterRPC.server('test',emitter,methods)
