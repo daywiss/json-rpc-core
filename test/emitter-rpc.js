@@ -25,12 +25,17 @@ var methods = {
 module.exports = function(test){
   var emitter = new Emitter()
   var client, server
+  var clientCalls, serverCalls
   test('testing emitter rpc',function(t){
     t.test('init',function(t){
       client = EmitterRPC.client('test',emitter,methods)
       server = EmitterRPC.server('test',emitter,methods)
+      clientCalls = client.createRemoteCalls(Object.keys(methods))
+      serverCalls = server.createRemoteCalls(Object.keys(methods))
       t.ok(client)
       t.ok(server) 
+      t.ok(clientCalls)
+      t.ok(serverCalls) 
       t.end()
     })
     t.test('echo',function(t){
@@ -41,22 +46,22 @@ module.exports = function(test){
       var arr = ['test']
 
       t.plan(6)
-      client.call('echo',str).then(function(result){
+      clientCalls.echo(str).then(function(result){
         t.equal(result,str)
       })
-      server.call('echo',str).then(function(result){
+      serverCalls.echo(str).then(function(result){
         t.equal(result,str)
       })
-      client.call('echo',obj).then(function(result){
+      clientCalls.echo(obj).then(function(result){
         t.deepEqual(result,obj)
       })
-      server.call('echo',obj).then(function(result){
+      serverCalls.echo(obj).then(function(result){
         t.deepEqual(result,obj)
       })
-      client.call('echo',arr).then(function(result){
+      clientCalls.echo(arr).then(function(result){
         t.deepEqual(result,arr)
       })
-      server.call('echo',arr).then(function(result){
+      serverCalls.echo(arr).then(function(result){
         t.deepEqual(result,arr)
       })
     })
@@ -67,22 +72,22 @@ module.exports = function(test){
       }
       var arr = ['test']
       t.plan(6)
-      client.call('promise',str).then(function(result){
+      clientCalls.promise(str).then(function(result){
         t.equal(result,str)
       })
-      server.call('promise',str).then(function(result){
+      serverCalls.promise(str).then(function(result){
         t.equal(result,str)
       })
-      client.call('promise',obj).then(function(result){
+      clientCalls.promise(obj).then(function(result){
         t.deepEqual(result,obj)
       })
-      server.call('promise',obj).then(function(result){
+      serverCalls.promise(obj).then(function(result){
         t.deepEqual(result,obj)
       })
-      client.call('promise',arr).then(function(result){
+      clientCalls.promise(arr).then(function(result){
         t.deepEqual(result,arr)
       })
-      server.call('promise',arr).then(function(result){
+      serverCalls.promise(arr).then(function(result){
         t.deepEqual(result,arr)
       })
     })
@@ -98,40 +103,40 @@ module.exports = function(test){
       server.notify('test','test')
     })
     t.test('error',function(t){
-        var str = 'test'
-        t.plan(2)
-        client.call('error',str).catch(function(err){
-          t.equal(str,err)
-        })
-        server.call('error',str).catch(function(err){
-          t.equal(str,err)
-        })
+      var str = 'test'
+      t.plan(2)
+      clientCalls.error(str).catch(function(err){
+        t.equal(str,err)
+      })
+      serverCalls.error(str).catch(function(err){
+        t.equal(str,err)
+      })
     })
     t.test('promise error',function(t){
         var str = 'test'
         t.plan(2)
-        client.call('promiseError',str).catch(function(err){
+        clientCalls.promiseError(str).catch(function(err){
           t.equal(str,err)
         })
-        server.call('promiseError',str).catch(function(err){
+        serverCalls.promiseError(str).catch(function(err){
           t.equal(str,err)
         })
     })
     t.test('nothing',function(t){
         t.plan(2)
-        client.call('nothing').then(function(result){
+        clientCalls.nothing().then(function(result){
           t.notOk(result)
         })
-        server.call('nothing').then(function(result){
+        serverCalls.nothing().then(function(result){
           t.notOk(result)
         })
     })
     t.test('nothing promise',function(t){
         t.plan(2)
-        client.call('nothingPromise').then(function(result){
+        clientCalls.nothingPromise().then(function(result){
           t.notOk(result)
         })
-        server.call('nothingPromise').then(function(result){
+        serverCalls.nothingPromise().then(function(result){
           t.notOk(result)
         })
     })

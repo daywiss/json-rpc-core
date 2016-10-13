@@ -3,6 +3,7 @@ var Promise = require('bluebird')
 var jrs = require('jsonrpc-serializer')
 var shortid = require('shortid')
 var lodash = require('lodash')
+var assert = require('assert')
 
 
 function RPC(methods){
@@ -118,8 +119,22 @@ function RPC(methods){
     outstream.write(message)
   }
 
+  function wrapMethod(methodName){
+    return call.bind(null,methodName)
+  }
+
+  function wrapMethods(methodNames){
+    assert(methodNames,'requires list of method names')
+    assert(lodash.isArray(methodNames),'requires list of method names')
+    return lodash.reduce(methodNames,function(result,name){
+      result[name] = wrapMethod(name)
+      return result
+    },{})
+  }
+
   stream.call = call
   stream.notify = notify
+  stream.createRemoteCalls = wrapMethods
   return stream
 }
 
