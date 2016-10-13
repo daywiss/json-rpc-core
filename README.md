@@ -98,5 +98,11 @@ function Emitter(localid,remoteid,emitter,methods){
   })
   server.notify('test','test')
 
+
+  //can also use createRemoteCalls which generate an object with remote calls
+  var clientCalls = client.createRemoteCalls(Object.key(methods))
+  //client.echo().then...
+  //client.promise().then...
+
 ```
 
