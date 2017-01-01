@@ -6,9 +6,10 @@ var lodash = require('lodash')
 var assert = require('assert')
 
 
-function RPC(methods){
+function RPC(methods,timeoutMS){
   var requests = { }
   var outstream = _()
+  timeoutMS = timeoutMS || 5000
 
   var stream =  _.pipeline(function(s){
     return s.map(function(message){
@@ -107,7 +108,7 @@ function RPC(methods){
          reject:reject,
          timeout:setTimeout(function(){
            timeout(id)
-         },5000)
+         },timeoutMS)
        }
     })
     outstream.write(message)
