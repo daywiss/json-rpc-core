@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "Transport agnostic JSON RPC message handling API meant for streams and promises. ",
   "main": "index.js",
-  "keywords": ["rpc","json","json rpc","stream", "streams","promises","agnostic","highland","client","server","messaging","message passing"]
+  "keywords": ["rpc","json","json rpc","stream", "streams","promises","agnostic","highland","client","server","messaging","message passing"],
   "directories": {
     "example": "examples",
     "test": "test"
