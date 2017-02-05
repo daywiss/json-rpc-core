@@ -1,5 +1,5 @@
 # json-rpc-core
-Transport agnostic JSON RPC message handling API meant for streams.  This library uses highland to wrap callbacks and promises into stream.
+Transport agnostic JSON RPC message handling API meant for streams and promises.  
 
 #Install
 ``` npm install --save json-rpc-core```   
@@ -68,7 +68,6 @@ client.discover().then(function(result){
 //was created with the rpcMethods class as well. 
 
 ```
-
 #API
 
 ##Initialization
@@ -83,6 +82,9 @@ Create the rpc core stream.
 * methods (optional) - methods which are available to be called over RPC. Functions must be syncronous or use promises.
 * timeoutMS (optional) - defaults to 10000, 10 seconds. Milliseconds that messages should timeout when waiting for response. Can be disabled if set to 0, but this is not recommended
 as requests will pile up waiting for responses from remote. 
+
+###Returns
+A [highland](http://highlandjs.org) stream.
 
 ##Call
 Call a remote function by name. Allows any number of parameters. Returns a promise which can resolve or reject.
