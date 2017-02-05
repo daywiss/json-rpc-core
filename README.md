@@ -128,6 +128,26 @@ the local method will override the extension.
 ###Returns
 A promise which resolves to an array of callable remote method names.  Use in conjuction with rpc.createRemoteCalls.
 
+##Create Remote Calls
+Produces a new object with functions keyed by the function names you pass into it.
+The functions are just shortcuts to the `rpc.call` function.  Use in conjuction
+with `rpc.discover` to create an object which mirrors the remote API calls.
+
+```js
+  rpc.discover().then(function(methods){
+    return rpc.createRemoteCalls(methods)
+  }).then(function(server){
+    //server is an object with remote method calls
+  })
+```
+
+###Parameters
+This takes an array of strings, it just creates an object keyed by the strings
+* methods (required) - an array of strings which you want to turn into function calls
+
+###Returns
+An object keyed by the string names which act as a shortcut to `rpc.call`
+
 ##Echo
 Utility function which allows you to "ping" the remote with a message, like a connectivity test. This is implemented as a custom RPC message "rpc_echo". The
 JSON RPC protocol allows for custom methods signified by the "rpc" prefix. If a conflict is found with a local method
@@ -169,6 +189,7 @@ rpc.call('functionThatDoesNotExist').catch(function(err){
 ```
 You should always add a catch block to your function calls. The message field is typically the most descriptive part
 of the error. The data field can contain additial data about the error such as stack trace but currently is unused.
+
 
 #Previous Versions
 Anyone using a version before 1.2 should upgrade, The previous message stream
