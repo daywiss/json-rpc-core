@@ -144,9 +144,35 @@ Function takes single paramter
 ###Returns
 A promise which resolves to your original message.
 
+#Errors
+Errors can be thrown from the remote service syncronously or through an asycnronous promise. The RPC library
+will wrap all errors in a JSON RPC Error format and provide the error in this form when returned to the client.
+
+```js
+rpc.call('functionThatThrowsError').catch(function(err){
+  err == {
+    name:'JsonRpcError',
+    code:-32603,
+    message:'your error message',
+    data:[]
+  }
+})
+
+rpc.call('functionThatDoesNotExist').catch(function(err){
+  err == {
+    name:'MethodNotFoundError',
+    code:-32601,
+    message:'The JSON-RPC method does not exist, or is an invalid one.',
+    data:[]
+  }
+})
+```
+You should always add a catch block to your function calls. The message field is typically the most descriptive part
+of the error. The data field can contain additial data about the error such as stack trace but currently is unused.
+
 #Previous Versions
 Anyone using a version before 1.2 should upgrade, The previous message stream
-implementation messages only allowed messages to resolve in order. This would only be an issue if there are 
-major delays in responding to some requests. 
+implementation messages only allowed messages to resolve in order. This would be an issue if there are 
+major delays in responding to requests, causing essentially a traffic jam in serving requests. 
 
 

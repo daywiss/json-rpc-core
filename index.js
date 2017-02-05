@@ -68,9 +68,10 @@ function RPC(methods,timeoutMS){
         return extensions[method].apply(extensions,params)
       }
       throw new jrs.err.MethodNotFoundError(method)
-    }).catch(jrs.err.MethodNotFoundError,function(err){
-      throw err
     }).catch(function(err){
+      if(err instanceof jrs.err.MethodNotFoundError){
+        throw err
+      }
       if(lodash.isError(err)){
         throw new jrs.err.JsonRpcError(err.message || '',method,err.stack) 
       }else{

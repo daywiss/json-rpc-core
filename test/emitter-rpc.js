@@ -114,6 +114,7 @@ module.exports = function(test){
     t.test('no method',function(t){
       t.plan(1)
       client.call('nomethod').then(t.end).catch(function(err){
+        console.log(err)
         t.ok(err)
       })
     })
