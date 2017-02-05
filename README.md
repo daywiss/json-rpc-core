@@ -7,8 +7,8 @@ Transport agnostic JSON RPC message handling API meant for streams and promises.
 #Usage  
 This library is meant to be used with some transport layer, it can be any type, Redis, TCP, UDP, SocketIO, etc.
 All this library does is create a node steam compatible interface to pipe in incoming messages and pipe out outgoing messages.
-As long as your server and client use json-rpc-core to handle processing messages then you should have a working
-RPC interface.
+As long as your server and client classes are syncronous or return promises then you can wrap them with JSON-RPC-Core add a transport layer
+and you have a working RPC interface.
 
 ```js
 //Simple example using an event emitter as our transport layer
@@ -16,6 +16,8 @@ var RPC = require('json-rpc-core')
 var Emitter = require('events')
 
 //stub for an actual class with functions
+//these functions can return promises as well.
+//any possible errors will be caught and returned to the caller.
 var rpcMethods = {
   echo:function(msg){
     return msg
