@@ -23,14 +23,22 @@ module.exports.server = function(id, emitter,methods){
 function Emitter(localid,remoteid,emitter,methods){
   var rpc = RPC(methods || {})
 
-  //create a stream from events with the localid
-  _(localid,emitter)
-    //send to json-rpc-core
-    .pipe(rpc)
-    //handle results and emit them to remote id
-    .on('data',function(message){
-      emitter.emit(remoteid,message)
-    })
+  emitter.on(localid,function(msg){
+    rpc.write(msg)
+  })
+
+  rpc.on('data',function(msg){
+    emitter.emit(remoteid,msg)
+  })
+
+  // //create a stream from events with the localid
+  // _(localid,emitter)
+  //   //send to json-rpc-core
+  //   .pipe(rpc)
+  //   //handle results and emit them to remote id
+  //   .each(function(message){
+  //     emitter.emit(remoteid,message)
+  //   })
 
     //return rpc object which has call and notify functions
     return rpc

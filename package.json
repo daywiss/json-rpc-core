@@ -22,7 +22,7 @@
   "homepage": "https://github.com/daywiss/json-rpc-core#readme",
   "dependencies": {
     "bluebird": "^3.4.1",
-    "highland": "^3.0.0-beta.2",
+    "highland": "^2.10.1",
     "jsonrpc-serializer": "^0.1.8",
     "lodash": "^4.15.0",
     "shortid": "^2.2.6"

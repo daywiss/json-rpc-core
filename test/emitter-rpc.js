@@ -1,5 +1,6 @@
 var EmitterRPC = require('../examples/emitter-rpc')
 var Emitter = require('events')
+var lodash = require('lodash')
 var Promise = require('bluebird')
 
 var methods = {
@@ -13,6 +14,12 @@ var methods = {
   },
   error:function(msg){
     throw new Error(msg)
+  },
+  fakeError:function(msg){
+    throw msg
+  },
+  runtimeError:function(msg){
+    return msgs
   },
   promiseError:function(msg){
     return Promise.reject(msg)
@@ -92,34 +99,57 @@ module.exports = function(test){
       })
     })
     t.test('notify',function(t){
+      t.plan(4)
+      client.on('test',function(a,b){
+        t.equal('test1',a)
+        t.equal('test2',b)
+      })
+      server.on('test',function(a,b){
+        t.equal('test1',a)
+        t.equal('test2',b)
+      })
+      client.notify('test','test1','test2')
+      server.notify('test','test1','test2')
+    })
+    t.test('no method',function(t){
+      t.plan(1)
+      client.call('nomethod').then(t.end).catch(function(err){
+        t.ok(err)
+      })
+    })
+    t.test('fake error',function(t){
       t.plan(2)
-      client.on('test',function(result){
-        t.equal('test',result)
+      client.call('fakeError','fakeError').then(t.end).catch(function(err){
+        t.ok(err)
       })
-      server.on('test',function(result){
-        t.equal('test',result)
+      server.call('fakeError').then(t.end).catch(function(err){
+        t.ok(err)
       })
-      client.notify('test','test')
-      server.notify('test','test')
+    })
+    t.test('runtime error',function(t){
+      t.plan(1)
+      client.call('runtimeError').then(t.end).catch(function(err){
+        t.ok(err)
+      })
     })
     t.test('error',function(t){
       var str = 'test'
       t.plan(2)
       clientCalls.error(str).catch(function(err){
-        t.equal(str,err)
+        t.equal(str,err.message)
       })
       serverCalls.error(str).catch(function(err){
-        t.equal(str,err)
+        t.equal(str,err.message)
       })
     })
     t.test('promise error',function(t){
         var str = 'test'
         t.plan(2)
         clientCalls.promiseError(str).catch(function(err){
-          t.equal(str,err)
+          t.equal(str,err.message)
         })
         serverCalls.promiseError(str).catch(function(err){
-          t.equal(str,err)
+          t.equal(str,err.message)
         })
     })
     t.test('nothing',function(t){
@@ -139,6 +169,15 @@ module.exports = function(test){
         serverCalls.nothingPromise().then(function(result){
           t.notOk(result)
         })
+    })
+    t.test('discover',function(t){
+      t.plan(2)
+      client.discover().then(function(result){
+        t.deepEqual(lodash.keys(methods),result)
+      }).catch(t.end)
+      server.discover().then(function(result){
+        t.deepEqual(lodash.keys(methods),result)
+      }).catch(t.end)
     })
   })
 }

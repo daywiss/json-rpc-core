@@ -7,63 +7,86 @@ var assert = require('assert')
 
 
 function RPC(methods,timeoutMS){
+  methods = methods || {}
+  //map of pending requests
   var requests = { }
+  //stream to write remote calls to
   var outstream = _()
-  timeoutMS = timeoutMS || 5000
+  //timeout length to wait for response
+  timeoutMS = timeoutMS || 10000
 
-  var stream =  _.pipeline(function(s){
+  //json rpc system extensions to allow for meta requests
+  //these will be tacked on after any methods passed in
+  var extensions = {}
+
+  extensions.rpc_discover = function(){
+    return lodash.keys(methods)
+  }
+
+  extensions.rpc_echo = function(params){
+    return params
+  }
+
+  var instream =  _.pipeline(function(s){
     return s.map(function(message){
       return jrs.deserialize(message)
-    }).flatMap(function(message){
+    }).consume(function(err,message,push,next){
+      if(message === _.nil){
+        return push(null,message)
+      }
       switch(message.type){
         case 'request':
-          return _(handleRequest(message.payload))
+          handleRequest(message.payload).then(function(result){
+            push(null,result)
+          }).catch(push)
+          break
         case 'notification':
-          return _(handleNotify(message.payload))
+          handleNotify(message.payload)
+          break
         case 'error':
-          return _(handleError(message.payload))
+          handleError(message.payload)
+          break
         case 'success':
-          return _(handleSuccess(message.payload))
+          handleSuccess(message.payload)
+          break 
         default:
-          return _(Promise.resolve(false))
+          push(err,message)
       }
+      next()
     }).errors(function(err,next){
       console.log('JSON-RPC-CORE', err.toString())
       next(err)
-    }).compact().pipe(outstream)
+    }).pipe(outstream)
   })
+
+  function callFromRequest(method,params){
+    return Promise.try(function(){
+      if(lodash.has(methods,method)){
+        return methods[method].apply(methods,params)
+      }
+      if(lodash.has(extensions,method)){
+        return extensions[method].apply(extensions,params)
+      }
+      throw new jrs.err.MethodNotFoundError(method)
+    }).catch(jrs.err.MethodNotFoundError,function(err){
+      throw err
+    }).catch(function(err){
+      if(lodash.isError(err)){
+        throw new jrs.err.JsonRpcError(err.message || '',method,err.stack) 
+      }else{
+        throw new jrs.err.JsonRpcError(err || '',method)
+      }
+    })
+  }
 
   //on the server end, handle a method call from client
   function handleRequest(message){
     var method = message.method
     var id = message.id
     var params = message.params
-
-    //method does not exist on server
-    if(methods[method] == null){
-      var err = new jrs.err.MethodNotFoundError()
-      return Promise.resolve(jrs.error(id,err))
-    }
-
-    var result = null
-    //in case the function throws an error
-    try{
-      result = methods[method].apply(methods,params)
-    }catch(err){
-      err = new jrs.err.JsonRpcError(err.message) 
-      return Promise.resolve(jrs.error(id,err))
-    }
-
-    //wrap result in promise
-    return Promise.resolve(result).then(function(result){
+    return callFromRequest(method,params).then(function(result){
       return jrs.success(id,result || '')
     }).catch(function(err){
-      //check if actual error object or just a string
-      if(lodash.isError(err)){
-        err = new jrs.err.JsonRpcError(err.message) 
-      }else{
-        err = new jrs.err.JsonRpcError(err)
-      }
       return jrs.error(id,err)
     })
   }
@@ -71,53 +94,87 @@ function RPC(methods,timeoutMS){
   function handleNotify(message){
     var method = message.method
     var params = message.params
-    stream.emit(method,params)
-    return Promise.resolve(false)
+    instream.emit.bind(instream,method).apply(instream,params)
   }
 
   function handleError(message){
-    var id = message.id
-    if(requests[id] == null) return Promise.resolve(false)
-    requests[id].reject(message.error.message)
-    delete requests[id]
-    return Promise.resolve(false)
+    var request = getRequest(message.id)
+    if(request == null) return 
+    request.reject(message.error)
+    removeRequest(message.id)
   }
 
   function handleSuccess(message){
-    var id = message.id
-    if(requests[id] == null) return Promise.resolve(false)
-    requests[id].resolve(message.result)
-    delete requests[id]
-    return Promise.resolve(false)
+    var request = getRequest(message.id)
+    if(request == null) return
+    request.resolve(message.result)
+    removeRequest(message.id)
   }
 
-  function timeout(id){
-    var request = requests[id]
+  function handleDiscover(message){
+    return lodash.keys(methods)
+  }
+
+  function addRequest(id){
+    return new Promise(function(res,rej){
+      lodash.set(requests,id,{
+        id:id,
+        resolve:res,
+        reject:rej,
+        expires:Date.now() + timeoutMS
+      })
+    })
+  }
+
+  function removeRequest(id){
+    return lodash.unset(requests,id)
+  }
+
+  function getRequest(id){
+    return lodash.get(requests,id,null)
+  }
+
+  function timeout(request){
     if(request == null) return
     request.reject('request timed out')
-    delete requests[id]
+    removeRequest(request.id)
   }
+
+  function checkTimeouts(ts){
+    return new Promise(function(res,rej){
+      _.values(requests).filter(function(request){
+        return request.expires < ts
+      }).doto(timeout).errors(rej).toArray(res)
+    })
+  }
+
+  function timeoutLoop(){
+    checkTimeouts(Date.now()).then(function(expired){
+      setTimeout(timeoutLoop,100)
+    })
+  }
+
 
   function call(method){
     var id = shortid.generate()
     var argumentList = Array.prototype.slice.call(arguments,1)
     message = jrs.request(id,method,argumentList)
-    var promise = new Promise(function(resolve,reject){
-       requests[id] = {
-         resolve:resolve,
-         reject:reject,
-         timeout:setTimeout(function(){
-           timeout(id)
-         },timeoutMS)
-       }
-    })
     outstream.write(message)
-    return promise
+    return addRequest(id)
   }
 
-  function notify(channel,data){
-    message = jrs.notification(channel,data)
+  function notify(channel){
+    var argumentList = Array.prototype.slice.call(arguments,1)
+    message = jrs.notification(channel,argumentList)
     outstream.write(message)
+  }
+
+  function discover(){
+    return call('rpc_discover')
+  }
+
+  function echo(params){
+    return call('rpc_echo',params)
   }
 
   function wrapMethod(methodName){
@@ -133,10 +190,16 @@ function RPC(methods,timeoutMS){
     },{})
   }
 
-  stream.call = call
-  stream.notify = notify
-  stream.createRemoteCalls = wrapMethods
-  return stream
+  //start message timeout loop
+  timeoutLoop()
+
+  //make some methods public
+  instream.discover = discover
+  instream.echo = echo
+  instream.call = call
+  instream.notify = notify
+  instream.createRemoteCalls = wrapMethods
+  return instream
 }
 
 module.exports = RPC
