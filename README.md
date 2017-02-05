@@ -135,9 +135,8 @@ with `rpc.discover` to create an object which mirrors the remote API calls.
 
 ```js
   rpc.discover().then(function(methods){
-    return rpc.createRemoteCalls(methods)
-  }).then(function(server){
     //server is an object with remote method calls
+    var server = rpc.createRemoteCalls(methods)
   })
 ```
 
