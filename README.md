@@ -30,7 +30,8 @@ var emitter = new Emitter()
 //this will wire up the emitter into the rpc-core
 function makeEmitterRPC(localid,remoteid,methods){
 
-  //instantiate the rpc stream
+  //instantiate the rpc stream. A node compatible stream, with extra functions
+  //thanks to the highland library. See http://highlandjs.org.
   var rpc = RPC(methods)
   
   //emitter will fire on the localid when it receives a message
@@ -86,12 +87,14 @@ Create the rpc core stream.
 as requests will pile up waiting for responses from remote. 
 
 ###Returns
-A [highland](http://highlandjs.org) stream.
+A [highland](http://highlandjs.org) stream. This stream conforms to node streams, but adds additional useful functions.
 
 ##Call
 Call a remote function by name. Allows any number of parameters. Returns a promise which can resolve or reject.
 ```js
-  rpc.call(remoteFunction,param1,param2, etc...)
+  rpc.call(remoteFunction,param1,param2, etc...).then(function(result){
+    //result is the result of the remote function call
+  })
 ```
 
 ###Parameters
@@ -126,7 +129,9 @@ JSON RPC protocol allows for custom methods signified by the "rpc" prefix. If a 
 the local method will override the extension. 
 
 ```js
-  rpc.discover()
+  rpc.discover().then(function(result){
+    //result are the available remote methods names
+  })
 ```
 
 ###Returns
@@ -172,6 +177,7 @@ Errors can be thrown from the remote service syncronously or through an asycnron
 will wrap all errors in a JSON RPC Error format and provide the error in this form when returned to the client.
 
 ```js
+//the type of error thrown when the remote call throws an error
 rpc.call('functionThatThrowsError').catch(function(err){
   err == {
     name:'JsonRpcError',
@@ -181,6 +187,7 @@ rpc.call('functionThatThrowsError').catch(function(err){
   }
 })
 
+//the type of error when no such method exists on remote server
 rpc.call('functionThatDoesNotExist').catch(function(err){
   err == {
     name:'MethodNotFoundError',
