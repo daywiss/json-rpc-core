@@ -93,7 +93,7 @@ A [highland](http://highlandjs.org) stream. This stream conforms to node streams
 Call a remote function by name. Allows any number of parameters. Returns a promise which can resolve or reject.
 Nested functions are now supported using [lodash's "get" syntax](https://lodash.com/docs/4.17.4#get). Seperate nested paths as an array or using
 "dot" notation. Be aware that nested calls get serialized to a string with '.'. Call can also access non functions, 
-and will try to return them as is. This will allow you to remotely access to the prototype or other parts of your class which should not be called. 
+and will try to return them as is. This will allow you to remotely access to the prototype or other parts of your class.
 ```js
   rpc.call(remoteFunction,param1,param2, etc...).then(function(result){
     //result is the result of the remote function call
