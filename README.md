@@ -193,32 +193,30 @@ A promise which resolves to your original message.
 
 #Errors
 Errors can be thrown from the remote service syncronously or through an asycnronous promise. The RPC library
-will wrap all errors in a JSON RPC Error format and provide the error in this form when returned to the client.
+will attempt to translate a JSON RPC error into a standard node Error with a message and stack trace
+and reject it through the promise. The stacktrace, if available, will be the stack from the server side error.
 
 ```js
 //the type of error thrown when the remote call throws an error
 rpc.call('functionThatThrowsError').catch(function(err){
+  //err is a javascript Error class
   err == {
-    name:'JsonRpcError',
-    code:-32603,
     message:'your error message',
-    data:['functionThatThrowsError','stackTrace']
+    stack:'stacktrace...'
   }
 })
 
 //the type of error when no such method exists on remote server
 rpc.call('functionThatDoesNotExist').catch(function(err){
+  //err is a javascript Error class
   err == {
-    name:'MethodNotFoundError',
-    code:-32601,
     message:'The JSON-RPC method does not exist, or is an invalid one.',
-    data:['functionThatDoesNotExist']
+    stack:null
   }
 })
 ```
-You should always add a catch block to your function calls. The message field is typically the most descriptive part
-of the error. The most recent version of json-rpc-core adds stack trace data when available to the data parameters.
-
+You should always add a catch block at some point to your function calls.  
+The most recent version of json-rpc-core adds stack trace data when available.
 
 #Previous Versions
 Anyone using a version before 1.2 should upgrade, The previous message stream

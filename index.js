@@ -110,7 +110,9 @@ function RPC(methods,timeoutMS){
   function handleError(message){
     var request = getRequest(message.id)
     if(request == null) return 
-    request.reject(message.error)
+    var err = new Error(lodash.get(message,'error.message',null))
+    err.stack = lodash.get(message,'error.data[1]',null)
+    request.reject(err)
     removeRequest(message.id)
   }
 

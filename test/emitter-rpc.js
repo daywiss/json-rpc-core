@@ -124,34 +124,34 @@ module.exports = function(test){
       t.plan(2)
       client.call('nomethod').then(t.end).catch(function(err){
         t.ok(err)
-        t.ok(err.data.length)
+        t.ok(err)
       })
     })
     t.test('fake error',function(t){
-      t.plan(4)
+      t.plan(2)
       client.call('fakeError','fakeError').then(t.end).catch(function(err){
-        t.ok(err)
-        t.ok(err.data.length)
+        t.ok(lodash.isError(err))
       })
       server.call('fakeError').then(t.end).catch(function(err){
-        t.ok(err)
-        t.ok(err.data.length)
+        t.ok(lodash.isError(err))
       })
     })
     t.test('runtime error',function(t){
       t.plan(2)
       client.call('runtimeError').then(t.end).catch(function(err){
-        t.ok(err)
-        t.ok(err.data.length)
+        t.ok(err.stack)
+        t.ok(lodash.isError(err))
       })
     })
     t.test('error',function(t){
       var str = 'test'
-      t.plan(2)
+      t.plan(4)
       clientCalls.error(str).catch(function(err){
+        t.ok(err.stack)
         t.equal(str,err.message)
       })
       serverCalls.error(str).catch(function(err){
+        t.ok(err.stack)
         t.equal(str,err.message)
       })
     })
