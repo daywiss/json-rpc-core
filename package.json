@@ -24,7 +24,7 @@
     "mqtt",
     "rabbitmq",
     "socketio",
-    "udp",
+    "udp"
   ],
   "directories": {
     "example": "examples",
