@@ -59,13 +59,22 @@ function RPC(methods,timeoutMS){
     }).pipe(outstream)
   })
 
+  function callMethod(method,params,context){
+    if(lodash.isFunction(method)){
+      return method.apply(context,params)
+    }
+    return method
+  }
+
   function callFromRequest(method,params){
     return Promise.try(function(){
       if(lodash.has(methods,method)){
-        return methods[method].apply(methods,params)
+        var func = lodash.get(methods,method)
+        return callMethod(func,params,methods)
       }
       if(lodash.has(extensions,method)){
-        return extensions[method].apply(extensions,params)
+        var func = lodash.get(extensions,method)
+        return callMethod(func,params,extensions)
       }
       throw new jrs.err.MethodNotFoundError(method)
     }).catch(function(err){
@@ -159,6 +168,9 @@ function RPC(methods,timeoutMS){
   function call(method){
     var id = shortid.generate()
     var argumentList = Array.prototype.slice.call(arguments,1)
+    if(lodash.isArray(method)){
+      method = method.join('.')
+    }
     message = jrs.request(id,method,argumentList)
     outstream.write(message)
     return addRequest(id)

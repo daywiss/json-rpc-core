@@ -3,7 +3,20 @@
   "version": "1.2.0",
   "description": "Transport agnostic JSON RPC message handling API meant for streams and promises. ",
   "main": "index.js",
-  "keywords": ["rpc","json","json rpc","stream", "streams","promises","agnostic","highland","client","server","messaging","message passing"],
+  "keywords": [
+    "rpc",
+    "json",
+    "json rpc",
+    "stream",
+    "streams",
+    "promises",
+    "agnostic",
+    "highland",
+    "client",
+    "server",
+    "messaging",
+    "message passing"
+  ],
   "directories": {
     "example": "examples",
     "test": "test"
@@ -22,13 +35,13 @@
   },
   "homepage": "https://github.com/daywiss/json-rpc-core#readme",
   "dependencies": {
-    "bluebird": "^3.4.1",
-    "highland": "^2.10.1",
-    "jsonrpc-serializer": "^0.1.8",
-    "lodash": "^4.15.0",
+    "bluebird": "^3.4.7",
+    "highland": "^2.10.2",
+    "jsonrpc-serializer": "^0.2.1",
+    "lodash": "^4.17.4",
     "shortid": "^2.2.6"
   },
   "devDependencies": {
-    "tape": "^4.6.0"
+    "tape": "^4.6.3"
   }
 }

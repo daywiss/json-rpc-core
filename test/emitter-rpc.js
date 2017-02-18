@@ -26,6 +26,15 @@ var methods = {
   },
   promise:function(msg){
     return Promise.resolve(msg)
+  },
+  nested:{
+    call:function(){
+      return true
+    }
+  },
+  plainObject:{
+    array:[1,2,3,],
+    string:'hello world'
   }
 }
 
@@ -112,24 +121,28 @@ module.exports = function(test){
       server.notify('test','test1','test2')
     })
     t.test('no method',function(t){
-      t.plan(1)
+      t.plan(2)
       client.call('nomethod').then(t.end).catch(function(err){
         t.ok(err)
+        t.ok(err.data.length)
       })
     })
     t.test('fake error',function(t){
-      t.plan(2)
+      t.plan(4)
       client.call('fakeError','fakeError').then(t.end).catch(function(err){
         t.ok(err)
+        t.ok(err.data.length)
       })
       server.call('fakeError').then(t.end).catch(function(err){
         t.ok(err)
+        t.ok(err.data.length)
       })
     })
     t.test('runtime error',function(t){
-      t.plan(1)
+      t.plan(2)
       client.call('runtimeError').then(t.end).catch(function(err){
         t.ok(err)
+        t.ok(err.data.length)
       })
     })
     t.test('error',function(t){
@@ -169,6 +182,25 @@ module.exports = function(test){
         serverCalls.nothingPromise().then(function(result){
           t.notOk(result)
         })
+    })
+    t.test('nested call',function(t){
+      t.plan(2)
+      client.call('nested.call').then(function(result){
+        t.ok(result)
+      }).catch(t.end)
+      client.call(['nested','call']).then(function(result){
+        t.ok(result)
+      }).catch(t.end)
+    })
+
+    t.test('plain object',function(t){
+      t.plan(2)
+      client.call('plainObject').then(function(result){
+        t.deepEqual(result,methods.plainObject)
+      })
+      client.call('plainObject.array.1').then(function(result){
+        t.deepEqual(result,2)
+      })
     })
     t.test('discover',function(t){
       t.plan(2)

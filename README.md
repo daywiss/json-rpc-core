@@ -6,7 +6,7 @@ Transport agnostic JSON RPC message handling API meant for streams and promises.
 
 #Usage  
 This library is meant to be used with some transport layer, it can be any type, Redis, TCP, UDP, SocketIO, etc.
-All this library does is create a node steam compatible interface to pipe in incoming messages and pipe out outgoing messages.
+All this library does is create a node stream compatible interface to pipe in incoming messages and pipe out outgoing messages.
 As long as your server and client classes are syncronous or return promises then you can wrap them with JSON-RPC-Core add a transport layer
 and you have a working RPC interface.
 
@@ -91,10 +91,29 @@ A [highland](http://highlandjs.org) stream. This stream conforms to node streams
 
 ##Call
 Call a remote function by name. Allows any number of parameters. Returns a promise which can resolve or reject.
+Nested functions are now supported using [lodash's "get" syntax](https://lodash.com/docs/4.17.4#get). Seperate nested paths as an array or using
+"dot" notation. Be aware that nested calls get serialized to a string with '.'. Call can also access non functions, 
+and will try to return them as is. This will allow you to remotely access to the prototype or other parts of your class which should not be called. 
 ```js
   rpc.call(remoteFunction,param1,param2, etc...).then(function(result){
     //result is the result of the remote function call
   })
+
+  //ways to call nested functions, these will call a function on the object
+  //{
+  //  deeply:{
+  //    nested:{
+  //      method:function(){ return true}
+  //    }
+  //  }
+  //}
+  rpc.call(['deeply','nested','method']).then(function(result)...
+  rpc.call('deeply.nested.method').then(function(result)...
+
+
+  //call will work on non functions, and will just try to return them as is
+  rpc.call('plainObject').then(function(result)...
+  //can also use nested notation
 ```
 
 ###Parameters
@@ -126,7 +145,7 @@ Nothing
 ##Discover
 Utility function to discover remote method names. This is implemented as a custom RPC message "rpc_discover". The
 JSON RPC protocol allows for custom methods signified by the "rpc" prefix. If a conflict is found with a local method
-the local method will override the extension. 
+the local method will override the extension. Discover will not return nested methods.
 
 ```js
   rpc.discover().then(function(result){
@@ -183,7 +202,7 @@ rpc.call('functionThatThrowsError').catch(function(err){
     name:'JsonRpcError',
     code:-32603,
     message:'your error message',
-    data:[]
+    data:['functionThatThrowsError','stackTrace']
   }
 })
 
@@ -193,12 +212,12 @@ rpc.call('functionThatDoesNotExist').catch(function(err){
     name:'MethodNotFoundError',
     code:-32601,
     message:'The JSON-RPC method does not exist, or is an invalid one.',
-    data:[]
+    data:['functionThatDoesNotExist']
   }
 })
 ```
 You should always add a catch block to your function calls. The message field is typically the most descriptive part
-of the error. The data field can contain additial data about the error such as stack trace but currently is unused.
+of the error. The most recent version of json-rpc-core adds stack trace data when available to the data parameters.
 
 
 #Previous Versions
