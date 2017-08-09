@@ -1,10 +1,10 @@
 # json-rpc-core
 Transport agnostic JSON RPC message handling API meant for streams and promises.  
 
-#Install
+# Install
 ``` npm install --save json-rpc-core```   
 
-#Usage  
+# Usage  
 This library is meant to be used with some transport layer, it can be any type, Redis, TCP, UDP, SocketIO, etc.
 All this library does is create a node stream compatible interface to pipe in incoming messages and pipe out outgoing messages.
 As long as your server and client classes are syncronous or return promises then you can wrap them with JSON-RPC-Core add a transport layer
@@ -71,9 +71,9 @@ client.discover().then(function(result){
 //was created with the rpcMethods class as well. 
 
 ```
-#API
+# API
 
-##Initialization
+## Initialization
 Create the rpc core stream. 
 
 ```js
@@ -81,15 +81,15 @@ Create the rpc core stream.
 
   var rpc = RPC(methods,timeoutMS)
 ```
-###Parameters
+### Parameters
 * methods (optional) - methods which are available to be called over RPC. Functions must be syncronous or use promises.
 * timeoutMS (optional) - defaults to 10000, 10 seconds. Milliseconds that messages should timeout when waiting for response. Can be disabled if set to 0, but this is not recommended
 as requests will pile up waiting for responses from remote. 
 
-###Returns
+### Returns
 A [highland](http://highlandjs.org) stream. This stream conforms to node streams, but adds additional useful functions.
 
-##Call
+## Call
 Call a remote function by name. Allows any number of parameters. Returns a promise which can resolve or reject.
 Nested functions are now supported using [lodash's "get" syntax](https://lodash.com/docs/4.17.4#get). Seperate nested paths as an array or using
 "dot" notation. Be aware that nested calls get serialized to a string with '.'. Call can also access non functions, 
@@ -116,16 +116,16 @@ and will try to return them as is. This will allow you to remotely access to the
   //can also use nested notation
 ```
 
-###Parameters
+### Parameters
 Parameters are variable, they will just be passed through to remote function    
 * remoteFunction (required) - the name of the remote function you wish to call
 * params_n (optional) - N number of parameters which the remote functions requires
 
-###Returns
+### Returns
 Promise with the result from the remote call
 
 
-##Notify
+## Notify
 Notify the remote, essentially cause a specific event to fire. Certain events names are reserved since they conflict
 with the node stream api: 'data', 'close', 'drain', 'error', 'finish', 'pipe', 'unpipe', 'end', 'readable'.
 The library does not prevent you from emitting these events but the resulting behavior is undefined. 
@@ -134,15 +134,15 @@ The library does not prevent you from emitting these events but the resulting be
   rpc.notify(eventName,param1,param2, etc...)
 ```
 
-###Parameters
+### Parameters
 Parameters are variable, they will just be passed through to remote function    
 * eventName (required) - the name of the event you want to emit on the remote
 * params_n (optional) - N number of parameters which get passed into the event callback.
 
-###Returns
+### Returns
 Nothing
 
-##Discover
+## Discover
 Utility function to discover remote method names. This is implemented as a custom RPC message "rpc_discover". The
 JSON RPC protocol allows for custom methods signified by the "rpc" prefix. If a conflict is found with a local method
 the local method will override the extension. Discover will not return nested methods.
@@ -153,10 +153,10 @@ the local method will override the extension. Discover will not return nested me
   })
 ```
 
-###Returns
+### Returns
 A promise which resolves to an array of callable remote method names.  Use in conjuction with rpc.createRemoteCalls.
 
-##Create Remote Calls
+## Create Remote Calls
 Produces a new object with functions keyed by the function names you pass into it.
 The functions are just shortcuts to the `rpc.call` function.  Use in conjuction
 with `rpc.discover` to create an object which mirrors the remote API calls.
@@ -168,14 +168,14 @@ with `rpc.discover` to create an object which mirrors the remote API calls.
   })
 ```
 
-###Parameters
+### Parameters
 This takes an array of strings, it just creates an object keyed by the strings
 * methods (required) - an array of strings which you want to turn into function calls
 
-###Returns
+### Returns
 An object keyed by the string names which act as a shortcut to `rpc.call`
 
-##Echo
+## Echo
 Utility function which allows you to "ping" the remote with a message, like a connectivity test. This is implemented as a custom RPC message "rpc_echo". The
 JSON RPC protocol allows for custom methods signified by the "rpc" prefix. If a conflict is found with a local method
 the local method will override the extension. 
@@ -184,14 +184,14 @@ the local method will override the extension.
   rpc.echo(message)
 ```
 
-###Parameters
+### Parameters
 Function takes single paramter
 * message (optional) - a message you want echoed back to you.
 
-###Returns
+### Returns
 A promise which resolves to your original message.
 
-#Errors
+# Errors
 Errors can be thrown from the remote service syncronously or through an asycnronous promise. The RPC library
 will attempt to translate a JSON RPC error into a standard node Error with a message and stack trace
 and reject it through the promise. The stacktrace, if available, will be the stack from the server side error.
@@ -218,7 +218,7 @@ rpc.call('functionThatDoesNotExist').catch(function(err){
 You should always add a catch block at some point to your function calls.  
 The most recent version of json-rpc-core adds stack trace data when available.
 
-#Previous Versions
+# Previous Versions
 Anyone using a version before 1.2 should upgrade, The previous message stream
 implementation messages only allowed messages to resolve in order. This would be an issue if there are 
 major delays in responding to requests, causing essentially a traffic jam in serving requests. 
