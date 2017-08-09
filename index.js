@@ -95,7 +95,21 @@ function RPC(methods,timeoutMS){
     var id = message.id
     var params = message.params
     return callFromRequest(method,params).then(function(result){
-      return jrs.success(id,result || '')
+      //empty response not allowed. stupid
+      var result = jrs.success(id,result || '')
+      if(result instanceof jrs.err.MethodNotFoundError){
+        throw result
+      }
+      if(result instanceof jrs.err.ParseError){
+        throw result
+      }
+      if(result instanceof jrs.err.InvalidRequestError){
+        throw result
+      }
+      if(result instanceof jrs.err.InvalidParamsError){
+        throw result
+      }
+      return result
     }).catch(function(err){
       return jrs.error(id,err)
     })
@@ -148,7 +162,7 @@ function RPC(methods,timeoutMS){
 
   function timeout(request){
     if(request == null) return
-    request.reject('request timed out')
+    request.reject(new Error('request timed out'))
     removeRequest(request.id)
   }
 
