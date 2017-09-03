@@ -38,6 +38,8 @@ function RPC(methods,timeoutMS){
         case 'request':
           handleRequest(message.payload).then(function(result){
             push(null,result)
+            //fix promise error
+            return true
           }).catch(push)
           break
         case 'notification':
@@ -177,6 +179,8 @@ function RPC(methods,timeoutMS){
   function timeoutLoop(){
     checkTimeouts(Date.now()).then(function(expired){
       setTimeout(timeoutLoop,100)
+      //fix promise error
+      return true
     })
   }
 
