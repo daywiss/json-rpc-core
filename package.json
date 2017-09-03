@@ -1,6 +1,6 @@
 {
   "name": "json-rpc-core",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Transport agnostic JSON RPC message handling API meant for streams and promises. ",
   "main": "index.js",
   "keywords": [
