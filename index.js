@@ -36,14 +36,14 @@ function RPC(methods,timeoutMS){
       }
       switch(message.type){
         case 'request':
-          handleRequest(message.payload).then(function(result){
+          return handleRequest(message.payload).then(function(result){
             push(null,result)
             //fix promise error
             return true
           }).catch(push)
           break
         case 'notification':
-          handleNotify(message.payload)
+          return handleNotify(message.payload)
           break
         case 'error':
           handleError(message.payload)
@@ -54,10 +54,10 @@ function RPC(methods,timeoutMS){
         default:
           push(err,message)
       }
-      next()
+      return next()
     }).errors(function(err,next){
       console.log('JSON-RPC-CORE', err.toString())
-      next(err)
+      return next(err)
     }).pipe(outstream)
   })
 
